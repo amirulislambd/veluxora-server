@@ -42,6 +42,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/featured", async (req, res) => {
+      const result = await carCollection.find().limit(4).toArray();
+      res.send(result);
+    });
+
     app.get("/cars/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
