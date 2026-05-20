@@ -37,42 +37,11 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/bookings", async (req, res) => {
-      const booking = req.body;
-      const result = await bookingCollection.insertOne(booking);
-      res.send(result);
-    });
-
     app.get("/cars", async (req, res) => {
       const result = await carCollection.find().toArray();
       res.send(result);
     });
 
-    app.get("/cars/:id", async (req, res) => {
-      const { id } = req.params;
-      const query = { _id: new ObjectId(id) };
-      const result = await carCollection.findOne(query);
-      res.send(result);
-    });
-
-    app.get("/bookings", async (req, res) => {
-      const result = await bookingCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/bookings/:id", async (req, res) => {
-      const { id } = req.params;
-      const query = { _id: new ObjectId(id) };
-      const result = await bookingCollection.findOne(query);
-      res.send(result);
-    });
-
-    app.delete("/bookings/:id", async (req, res) => {
-      const { id } = req.params;
-      const query = { _id: new ObjectId(id) };
-      const result = await bookingCollection.deleteOne(query);
-      res.send(result);
-    });
   } finally {
     // await client.close();
   }
