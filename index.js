@@ -42,6 +42,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/cars/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await carCollection.findOne(query);
+      res.send(result);
+    });
+
+
   } finally {
     // await client.close();
   }
