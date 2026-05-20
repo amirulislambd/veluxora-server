@@ -38,7 +38,31 @@ async function run() {
     });
 
     app.get("/cars", async (req, res) => {
-      const result = await carCollection.find().toArray();
+      const result = await carCollection.find().sort({ price: -1 }).toArray();
+      res.send(result);
+    });
+
+    app.get("/cars/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await carCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.patch("/cars/:id", async (req, res) => {
+      const { id } = req.params;
+      const { _id, ...updatedCar } = req.body;
+      const result = await carCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedCar },
+      );
+      res.send(result);
+    });
+
+    app.delete("/cars/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await carCollection.deleteOne(query);
       res.send(result);
     });
 
@@ -51,13 +75,6 @@ async function run() {
 
     app.get("/featured", async (req, res) => {
       const result = await carCollection.find().limit(4).toArray();
-      res.send(result);
-    });
-
-    app.get("/cars/:id", async (req, res) => {
-      const { id } = req.params;
-      const query = { _id: new ObjectId(id) };
-      const result = await carCollection.findOne(query);
       res.send(result);
     });
 
@@ -85,8 +102,6 @@ async function run() {
       const result = await bookingCollection.deleteOne(query);
       res.send(result);
     });
-
-
   } finally {
     // await client.close();
   }
