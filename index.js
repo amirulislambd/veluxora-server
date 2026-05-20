@@ -42,6 +42,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/myAddedCars", async (req, res) => {
+      const email = req.query.email;
+      const query = { owner_email: email };
+      const result = await carCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.get("/featured", async (req, res) => {
       const result = await carCollection.find().limit(4).toArray();
       res.send(result);
