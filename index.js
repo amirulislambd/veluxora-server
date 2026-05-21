@@ -133,8 +133,6 @@ async function run() {
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking);
-
-      // $inc দিয়ে car-এর booking_count বাড়ানো হচ্ছে
       if (booking.car_id) {
         await carCollection.updateOne(
           { _id: new ObjectId(booking.car_id) },
