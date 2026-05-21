@@ -8,6 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const uri = process.env.MONGO_DB_URI;
 
 const client = new MongoClient(uri, {
@@ -17,6 +18,33 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+const verifyToken = async (req, res, next) => {
+  const authorHeader = req?.headers.authorization;
+
+  if (!authorHeader) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+
+  const token = authorHeader?.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    return res.status(401).send({ error: true, message: "forbidden access" });
+  }
+};
 
 async function run() {
   try {
@@ -66,7 +94,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/myAddedCars", async (req, res) => {
+    app.get("/myAddedCars", verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { owner_email: email };
       const result = await carCollection.find(query).toArray();
@@ -84,7 +112,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyToken, async (req, res) => {
       const result = await bookingCollection.find().toArray();
       res.send(result);
     });
