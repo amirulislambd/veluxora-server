@@ -61,16 +61,9 @@ async function run() {
     const carCollection = db.collection("allCars");
     const bookingCollection = db.collection("bookings");
 
-
     app.post("/cars", async (req, res) => {
       const newCar = req.body;
       const result = await carCollection.insertOne(newCar);
-      res.send(result);
-    });
-
-
-    app.get("/cars", async (req, res) => {
-      const result = await carCollection.find().sort({ price: -1 }).toArray();
       res.send(result);
     });
 
@@ -82,7 +75,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.patch("/cars/:id", async (req, res) => {
       const { id } = req.params;
       const { _id, ...updatedCar } = req.body;
@@ -93,7 +85,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.delete("/cars/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
@@ -101,6 +92,31 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/cars", async (req, res) => {
+      const search = req.query.search || "";
+      const type = req.query.type || "";
+      const available = req.query.available || "";
+
+      let query = {};
+      if (search) {
+        query.car_name = {
+          $regex: search,
+          $options: "i",
+        };
+      }
+
+      if (type && type !== "All") {
+        query.car_type = type;
+      }
+      if (available === "Available") {
+        query.availability_status = true;
+      } else if (available === "Unavailable") {
+        query.availability_status = false;
+      }
+
+      const result = await carCollection.find(query).toArray();
+      res.send(result);
+    });
 
     app.get("/myAddedCars", verifyToken, async (req, res) => {
       const email = req.query.email;
@@ -109,22 +125,27 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/featured", async (req, res) => {
       const result = await carCollection.find().limit(4).toArray();
       res.send(result);
     });
 
-
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking);
+
+      // $inc দিয়ে car-এর booking_count বাড়ানো হচ্ছে
+      if (booking.car_id) {
+        await carCollection.updateOne(
+          { _id: new ObjectId(booking.car_id) },
+          { $inc: { booking_count: 1 } }
+        );
+      }
+
       res.send(result);
     });
 
-
     app.get("/bookings", verifyToken, async (req, res) => {
-
       const email = req.query.email;
       const query = { user_email: email };
       const result = await bookingCollection.find(query).toArray();
@@ -137,7 +158,6 @@ async function run() {
       const result = await bookingCollection.findOne(query);
       res.send(result);
     });
-
 
     app.delete("/bookings/:id", async (req, res) => {
       const { id } = req.params;
