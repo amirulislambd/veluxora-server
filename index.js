@@ -19,8 +19,10 @@ const client = new MongoClient(uri, {
   },
 });
 
-const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
-
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
+console.log(process.env.CLIENT_URL);
 const verifyToken = async (req, res, next) => {
   const authorHeader = req?.headers.authorization;
 
@@ -48,9 +50,9 @@ const verifyToken = async (req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
@@ -59,16 +61,19 @@ async function run() {
     const carCollection = db.collection("allCars");
     const bookingCollection = db.collection("bookings");
 
+
     app.post("/cars", async (req, res) => {
       const newCar = req.body;
       const result = await carCollection.insertOne(newCar);
       res.send(result);
     });
 
+
     app.get("/cars", async (req, res) => {
       const result = await carCollection.find().sort({ price: -1 }).toArray();
       res.send(result);
     });
+
 
     app.get("/cars/:id", async (req, res) => {
       const { id } = req.params;
@@ -76,6 +81,7 @@ async function run() {
       const result = await carCollection.findOne(query);
       res.send(result);
     });
+
 
     app.patch("/cars/:id", async (req, res) => {
       const { id } = req.params;
@@ -87,12 +93,14 @@ async function run() {
       res.send(result);
     });
 
+
     app.delete("/cars/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
       const result = await carCollection.deleteOne(query);
       res.send(result);
     });
+
 
     app.get("/myAddedCars", verifyToken, async (req, res) => {
       const email = req.query.email;
@@ -101,10 +109,12 @@ async function run() {
       res.send(result);
     });
 
+
     app.get("/featured", async (req, res) => {
       const result = await carCollection.find().limit(4).toArray();
       res.send(result);
     });
+
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
@@ -112,8 +122,12 @@ async function run() {
       res.send(result);
     });
 
+
     app.get("/bookings", verifyToken, async (req, res) => {
-      const result = await bookingCollection.find().toArray();
+
+      const email = req.query.email;
+      const query = { user_email: email };
+      const result = await bookingCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -123,6 +137,7 @@ async function run() {
       const result = await bookingCollection.findOne(query);
       res.send(result);
     });
+
 
     app.delete("/bookings/:id", async (req, res) => {
       const { id } = req.params;
@@ -136,9 +151,9 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.get("/", (req, res) => {
-  res.send("bismaillahir rahmanir rahim");
-});
+// app.get("/", (req, res) => {
+//   res.send("bismaillahir rahmanir rahim");
+// });
 
 app.listen(port, () => {
   console.log(`Running app listening on port ${port}`);
